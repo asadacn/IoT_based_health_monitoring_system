@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Health Monitoring System</title>
+<!-- Bootstrap -->
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+<!-- Firebase Database Dependencies -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.3.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.3.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.3.0/firebase-analytics.js"></script>
+
+    <script>
+    // Your web app's Firebase configuration
+    // var firebaseConfig = {
+    //     apiKey: "AIzaSyBTR1YmS9u2d_gSIoY28Bs261HtdnTY1XI",
+    //     authDomain: "robo-doctor.firebaseapp.com",
+    //     databaseURL: "https://robo-doctor.firebaseio.com",
+    //     projectId: "robo-doctor",
+    //     storageBucket: "robo-doctor.appspot.com",
+    //     messagingSenderId: "1026491548208",
+    //     appId: "1:1026491548208:web:08a4dc84caa9f5c1bee3f5",
+    //     measurementId: "G-WBCBPSJCVY"
+    // };
+
+      // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyAZ33eaoEdz_zJ55mZF2ZgXJi9QROvFAlE",
+    authDomain: "health-monitoring-system-7745b.firebaseapp.com",
+    databaseURL: "https://health-monitoring-system-7745b.firebaseio.com",
+    projectId: "health-monitoring-system-7745b",
+    storageBucket: "health-monitoring-system-7745b.appspot.com",
+    messagingSenderId: "211800036714",
+    appId: "1:211800036714:web:16f622489f290f58e1c113",
+    measurementId: "G-K9BBV69HZL"
+  };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    </script>
+    <link href="https://fonts.googleapis.com/css?family=Odibee+Sans&display=swap" rel="stylesheet">
+    <style>
+     #map {
+      height: 300px;  /* The height is 400 pixels */
+      width: 100%;  /* The width is the width of the web page */
+     }
+     body{
+      background:linear-gradient(135deg, #fcdf8a 0%,#f38381 100%);
+     }
+     .header{
+      background-color: #FFFEFF;
+      color: #f38381;
+      font-family: 'Odibee Sans', cursive;
+      letter-spacing: 1.2em;
+     }
+  </style>
+</head>
+<body>
+    
+<!-- Main HTML CODE -->
+<div class="header shadow-sm p-3 mb-4">
+  <p class="display-3  text-center ">Health Monitoring System</p>
+</div>
+
+<div class="container">
+    <div class="row d-flex justify-content-center">
+        <div class="col-auto mb-1">
+                <div class="card shadow-sm" style="width: 15.5rem; height: auto;">
+                        <p class="card-header">Temparature</p>
+                        <img  src="./icon/hot.svg" class="card-img-top p-2" height="150px" alt="temparature"> 
+                        
+                        <div class="card-body">
+                          <p class="card-text alert alert-warning h4 text-center" role="alert" id="temp">0 <sup>o</sup>C</p>
+                        </div>
+                </div>
+        </div>
+        <div class="col-auto mb-1">
+                <div class="card shadow-sm" style="width: 15.5rem; height: auto;">
+                        <p class="card-header">BPM</p>
+                        <img  src="./icon/heart.svg" class="card-img-top p-2" height="150px" alt="BPM"> 
+                        <div class="card-body">
+                          <p class="card-text alert alert-success h4 text-center" role="alert" id="bpm">bpm</p>
+                        </div>
+                </div>
+        </div>
+        <div class="col-auto mb-1">
+                <div class="card shadow-sm" style="width: 15.5rem; height: auto;">
+                        <p class="card-header">Alcohol</p>
+                        <img  src="./icon/alcohol.svg" class="card-img-top p-2" height="150px" alt="alcohol"> 
+                        <div class="card-body">
+                          <p class="card-text alert alert-danger h5 text-center" role="alert" id="alcohol"></p>
+                        </div>
+                </div>
+        </div>
+        <div class="col-auto mb-1">
+                <div class="card shadow-sm" style="width: 15.5rem; height: auto;">
+                        <p class="card-header">Smoke</p>
+                        <img  src="./icon/fire.svg" class="card-img-top p-2" height="150px" alt="smoke"> 
+                        <div class="card-body">
+                          <p class="card-text alert alert-danger h5 text-center" role="alert" id="smoke"></p>
+                        </div>
+                </div>
+        </div>
+    </div>
+
+    <!-- Location -->
+    <div class=" my-5 bg-light p-2 rounded text-center shadow">
+            <p class="h4 text-dark" id="ecg">ECG DATA</p>
+            <!-- <img src="./heart.svg" alt="ecg"> -->
+            <canvas id="myChart" width="400" height="130"></canvas>
+
+        </div>
+
+    <!-- Location -->
+    <div class=" my-5 bg-light p-2 rounded text-center shadow">
+            <p class="h4 text-dark" >LOCATION</p>
+            <!-- <img src="./map.jpg" alt="ecg"> -->
+            <div id="map"></div>  
+    </div>
+</div>
+
+
+
+<!-- Firebase Quiries -->
+<script>
+
+ const db = firebase.database().ref(); // getting database root
+
+//  getting tempatarure value
+ db.child('temperature').on('value', function(snap){
+     const temp = snap.val() + '<sup>o</sup> C';
+     $('#temp').html(temp);
+ console.log('Temp:',snap.val());
+ });
+
+//  getting bpm value
+db.child('bpm').on('value', function(snap){
+     const bpm = snap.val() + ' bpm';
+     $('#bpm').html(bpm);
+ console.log('BPM:',snap.val());
+ });
+
+// //  getting location value
+db.child('ecg').on('value', function(snap){
+     const ecg = snap.val();
+     
+    const data=ecg.split(',');
+            // data.push(snap.val());
+
+            $('#name').html(name);
+            console.log(data);
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var chart = new Chart(ctx, {
+    // The type of chart we want to create
+    type: 'line',
+
+    // The data for our dataset
+    data: {
+         labels: data,
+        datasets: [{
+            label: 'ECG',
+            backgroundColor: 'rgba(255, 255, 255, 0.0)',
+            borderColor: 'rgb(255, 99, 132)',
+            data: data
+        }]
+    },
+
+    // Configuration options go here
+    options: {animation: {
+        duration: 50,
+        easing:'easeInBack'
+    },
+    elements: {
+            line: {
+                tension: .1 // disables bezier curves
+            },
+            point:{
+                        radius: 0
+                    }
+        }
+    
+    }
+});
+ console.log('ecg: ',ecg);
+ });
+
+ //  getting Smoke value
+ db.child('gas').on('value', function(snap){
+     const smoke = snap.val();
+
+     if (smoke) {
+        $('#smoke').removeClass('alert-success');
+        $('#smoke').addClass('alert-danger');
+        $('#smoke').html("Detected !");
+     }else{
+        $('#smoke').addClass('alert-success');
+        $('#smoke').removeClass('alert-danger');
+        $('#smoke').html("Not Detected !");
+     }
+     
+ console.log('Gas:',snap.val());
+ });
+
+
+ //  getting alcohol value
+ db.child('alcohol').on('value', function(snap){
+     const alcohol = snap.val();
+
+     if (alcohol) {
+        $('#alcohol').removeClass('alert-success');
+        $('#alcohol').addClass('alert-danger');
+        $('#alcohol').html("Detected !");
+     }else{
+        $('#alcohol').addClass('alert-success');
+        $('#alcohol').removeClass('alert-danger');
+        $('#alcohol').html("Not Detected !");
+     }
+     
+ console.log('Alcohol:',snap.val());
+ });
+</script>
+<!-- MAP -->
+<script>
+    // Initialize and add the map
+    function initMap() {
+        
+        // let lati=23.771972;
+        // let longi =90.428678;
+
+        //  getting tempatarure value
+        db.child('location').on('value', function(snap){
+            const cordinate = snap.val();
+          
+        console.log('Location:',cordinate);
+
+        // The location 
+        var location = {lat: cordinate.latitude, lng:  cordinate.longitude};
+      // The map, centered at location
+      var map = new google.maps.Map(
+          document.getElementById('map'), {zoom: 14, center: location});
+      // The marker, positioned at location
+      var marker = new google.maps.Marker({position: location, map: map});
+ });
+     
+    }
+        </script>
+        <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={YourAPIKEY}&callback=initMap">
+        </script>
+<!-- Bootstrap Scripts -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+</body>
+</html>
